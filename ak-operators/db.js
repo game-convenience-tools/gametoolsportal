@@ -1,6 +1,7 @@
 const MASTER_ORDER_STAR = ['6', '5', '4', '3', '2', '1'];
 const MASTER_ORDER_JOBGROUP = ['先鋒', '狙撃', '前衛', '術師', '重装', '医療', '特殊', '補助'];
 
+
 const ALL_COLUMNS = [
     { id: 'op', label: 'オペレーター', width: '130px', sortable: true },
     { id: 'star', label: '★', width: '70px', sortable: true },
