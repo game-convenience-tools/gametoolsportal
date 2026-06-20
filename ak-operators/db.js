@@ -365,7 +365,9 @@ function handleSearch(tabId, side) {
         // （何もヒットしなかった場合は非表示、または空行化の制御）
         if (hasSkillFilter && filteredSkills.length === 0) return; // タグ指定があるのに該当スキルが0なら除外
         
-        const displaySkills = (kw || hasSkillFilter) ? (filteredSkills.length > 0 ? filteredSkills : (char.skills || [null])) : (char.skills || [null]);
+        const displaySkills = (kw || hasSkillFilter) 
+            ? (filteredSkills.length > 0 ? filteredSkills : ((char.skills && char.skills.length > 0) ? char.skills : [null])) 
+            : ((char.skills && char.skills.length > 0) ? char.skills : [null]);
         filtered.push({ ...char, _originalIdx: originalIdx, _displaySkills: displaySkills });
     });
 
