@@ -19,7 +19,6 @@ const ALL_COLUMNS = [
     { id: 'obtain', label: '入手方法', width: '180px' }, 
     { id: 'recruitTags', label: '募集タグ', width: '220px' }, 
     { id: 'sName', label: 'スキル名', width: '140px' },
-    { id: 'sPriority', label: '特化優先度', width: '95px' },
     { id: 'sSpType', label: 'SPタイプ', width: '95px' }, 
     { id: 'sTrigger', label: '発動タイプ', width: '95px' }, 
     { id: 'sInit', label: '初期SP', width: '65px' }, 
@@ -29,7 +28,7 @@ const ALL_COLUMNS = [
     { id: 'sTag', label: 'スキルタグ', visible: true, width: '240px' }
 ];
 
-const filterKeys = ['sTag', 'star', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sPriority', 'sSpType', 'sTrigger'];
+const filterKeys = ['sTag', 'star', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger'];
 
 let operatorData = [];
 let tabs = []; 
@@ -338,7 +337,6 @@ function handleSearch(tabId, side) {
             if(!s) return false;
             
             // 1. まずドロップダウンのスキル系条件（優先度・回復・発動・スキルタグ）で厳格に絞り込む
-            if(tab.selections.sPriority.length && !tab.selections.sPriority.some(sel => normalizeVal(sel) === normalizeVal(s.priority))) return false;
             if(tab.selections.sSpType.length && !tab.selections.sSpType.some(sel => normalizeVal(sel) === normalizeVal(s.spType))) return false;
             if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
             if(tab.selections.sTag.length) {
@@ -357,7 +355,7 @@ function handleSearch(tabId, side) {
             return true;
         });
 
-        const hasSkillFilter = tab.selections.sPriority.length || tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
+        const hasSkillFilter = tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
         
         // 🌟 修正：キーワードがある場合、オペレーター自身（名前等）か「条件を満たしたスキル」のどちらかもキーワードにヒットしていなければ除外
         if (kw && !nameMatched && !cvMatched && !rangeMatched && filteredSkills.length === 0) return;
@@ -500,7 +498,7 @@ function handleCellClick(key, val, isEncoded = false) {
 function renderSearchGrid() {
     const grid = document.getElementById('searchGrid');
     if(!grid) return;
-    const labels = { star:'★', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sPriority:'特化優先度', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
+    const labels = { star:'★', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
     
     grid.innerHTML = `<div class="search-item keyword-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
     
@@ -606,7 +604,7 @@ function updateFilters(onlyCV = false) {
     filterKeys.forEach(k => {
         if (onlyCV && k !== 'cv') return;
         let opts = [];
-        const skillKeys = { sPriority: 'priority', sSpType: 'spType', sTrigger: 'trigger', sTag: 'tag' };
+        const skillKeys = { sSpType: 'spType', sTrigger: 'trigger', sTag: 'tag' };
 
         // --- ① オプションデータの抽出（データロジック） ---
         if (k === 'star') opts = [...MASTER_ORDER_STAR];
