@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アークナイツオペレーターデータベース マニュアル</title>
+<link rel="icon" href="アークナイツ.png" type="image/png">
+
+<style>
+:root{
+    --main:#4a6572;
+    --sub:#607d8b;
+    --bg:#eef3f6;
+    --card:#ffffff;
+    --border:#d0d7dd;
+    --text:#2c3e50;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    margin:0;
+    font-family:"Yu Gothic","Meiryo",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.8;
+}
+
+header{
+    background:var(--main);
+    color:#fff;
+    padding:32px;
+}
+
+header h1{
+    margin:0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+header h1 img {
+    height: 40px;
+    width: auto;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    padding:30px;
+}
+
+.card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:24px;
+    margin-bottom:24px;
+}
+
+h2{
+    border-left:6px solid var(--main);
+    padding-left:12px;
+    margin-top:0;
+}
+
+h3{
+    color:var(--main);
+}
+
+a{
+    color:var(--main);
+    text-decoration:none;
+}
+
+a:hover{
+    text-decoration:underline;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th,td{
+    border:1px solid var(--border);
+    padding:10px;
+}
+
+th{
+    background:#f4f7f9;
+}
+
+.step{
+    background:#f8fafb;
+    border-left:5px solid var(--main);
+    padding:12px;
+    margin:12px 0;
+}
+
+.tip{
+    background:#e8f5e9;
+    border-left:5px solid #4caf50;
+    padding:12px;
+    margin:12px 0;
+}
+
+footer{
+    text-align:center;
+    color:#607d8b;
+    padding:20px;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1><img src="アークナイツ.png" alt="">アークナイツオペレーターデータベース</h1>
+<p>操作マニュアル</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h2>目次</h2>
+<ol>
+<li><a href="#overview">システム概要</a></li>
+<li><a href="#screen">画面構成</a></li>
+<li><a href="#basic">基本操作</a></li>
+<li><a href="#tab-function">タブ機能</a></li>
+<li><a href="#split-screen">画面分割表示</a></li>
+<li><a href="#quick">クイックフィルター</a></li>
+<li><a href="#sort">並び替え</a></li>
+<li><a href="#page">ページ切替</a></li>
+<li><a href="#column">列表示設定</a></li>
+<li><a href="#json">JSON出力</a></li>
+<li><a href="#theme">テーマ切替</a></li>
+<li><a href="#save">保存される設定</a></li>
+</ol>
+</div>
+
+<div class="card" id="overview">
+<h2>1. システム概要</h2>
+<p>
+アークナイツのオペレーター情報やスキル情報を検索・閲覧するためのデータベースです。
+</p>
+<p>
+複数条件による絞り込みやスキル検索に加え、**「マルチタブ機能」**や**「画面分割機能」**を搭載しており、異なる検索結果を並べて比較・検討することができます。
+</p>
+</div>
+
+<div class="card" id="screen">
+<h2>2. 画面構成</h2>
+<table>
+<tr>
+<th>エリア</th>
+<th>内容</th>
+</tr>
+<tr>
+<td>ヘッダー</td>
+<td>テーマ切替、列表示設定、JSON出力、ヘルプを実行します。</td>
+</tr>
+<tr>
+<td>検索エリア</td>
+<td>選択中のタブに対する検索条件（キーワード・各種フィルター）を指定します。</td>
+</tr>
+<tr>
+<td>タブバー</td>
+<td>タブの追加、切り替え、削除、および画面分割のレイアウト変更を行います。</td>
+</tr>
+<tr>
+<td>ワークスペース（一覧表）</td>
+<td>
+検索結果を表示します。画面分割時は、選択したレイアウト（左右・上下）に合わせて複数の表が配置されます。青い枠線で囲まれている側が、現在検索操作の対象となっている「アクティブ画面」です。
+</td>
+</tr>
+</table>
+</div>
+
+<div class="card" id="basic">
+<h2>3. 基本操作</h2>
+
+<h3>3-1. キーワード検索</h3>
+<p>
+キーワード欄に文字を入力すると、リアルタイムで検索結果が更新されます。
+</p>
+<div class="step">
+① キーワード欄に文字を入力<br>
+② 検索結果を確認
+</div>
+<p>検索対象</p>
+<ul>
+<li>オペレーター名</li>
+<li>スキル名</li>
+<li>スキル説明</li>
+</ul>
+
+<h3>3-2. 条件検索</h3>
+<p>
+各条件を選択して検索できます。
+</p>
+<ul>
+<li>★ / ランク / CV / 職業 / 職分 / 攻撃範囲 / 攻撃区分 / コスト / ブロック数 / 再配置 / 攻撃速度 / 入手方法 / 募集タグ</li>
+<li>スキル情報（SPタイプ / 発動タイプ / スキルタグ）</li>
+</ul>
+<div class="step">
+① 条件を選択（クリックしてドロップダウンから選択、CVはサジェスト検索可能）<br>
+② 必要に応じて複数条件を追加<br>
+③ 検索結果を確認
+</div>
+<div class="tip">
+例：★6 ＋ 前衛 ＋ 手動発動
+</div>
+
+<h3>3-3. 検索条件リセット</h3>
+<p>
+「検索条件リセット」を押すと、現在選択しているタブのすべての検索条件（キーワードおよび全フィルター）が初期化されます。
+</p>
+<div class="step">
+① 検索条件リセットを押す<br>
+② 選択中のタブの条件がすべて解除される
+</div>
+</div>
+
+<div class="card" id="tab-function">
+<h2>4. タブ機能</h2>
+<p>
+複数の検索状態を「タブ」として保持し、ワンクリックで切り替えることができます。
+</p>
+<h3>タブの追加</h3>
+<div class="step">
+① タブバーの「**＋**」ボタンをクリックします。<br>
+② 新しいタブ（初期名：「検索 [番号]」）が追加され、自動的に選択されます。
+</div>
+
+<h3>タブ名の変更</h3>
+<div class="step">
+① 変更したいタブの**文字部分をダブルクリック**します。<br>
+② 入力ダイアログが表示されるので、任意の名前を入力して「OK」を押します。
+</div>
+
+<h3>タブの削除</h3>
+<div class="step">
+① タブの右側にある「**×**」マークをクリックします。<br>
+※タブが1つしかない場合は削除できません。
+</div>
+</div>
+
+<div class="card" id="split-screen">
+<h2>5. 画面分割表示</h2>
+<p>
+ワークスペースのレイアウトを切り替えて、2つの検索結果を同時に表示・比較できます。
+</p>
+<h3>レイアウトの切り替え</h3>
+<p>タブバーの右側にあるコントロールボタンから、以下の3つのモードを選択できます。</p>
+<ul>
+<li>**▢ 通常**：画面を分割せず、1つの表を大きく表示します。</li>
+<li>**◧ 左右分割**：画面を左右に2分割し、2つの表を並べます。</li>
+<li>**◪ 上下分割**：画面を上下に2分割し、2つの表を並べます。</li>
+</ul>
+
+<h3>分割画面での操作方法</h3>
+<div class="step">
+① 操作したい側の表（枠内）を**クリックしてアクティブ（青枠表示）にします**。<br>
+② 上部の検索エリアで条件を変更すると、**アクティブな側の表の検索結果のみ**が更新されます。<br>
+③ アクティブな画面に対して、タブバーから異なるタブを割り当てて表示することも可能です。
+</div>
+<div class="tip">
+**活用例**：左画面に「先鋒オペレーター」、右画面に「重装オペレーター」のタブをそれぞれ表示させ、ステータスやコストを同時に見比べる、といった高度な比較が可能です。
+</div>
+</div>
+
+<div class="card" id="quick">
+<h2>6. クイックフィルター</h2>
+<p>
+一覧内の項目をクリックすると、その値で即座に絞り込みができます。
+</p>
+<table>
+<tr>
+<th>クリック対象</th>
+<th>動作</th>
+</tr>
+<tr>
+<td>CV</td>
+<td>同じCVで絞り込み</td>
+</tr>
+<tr>
+<td>職業</td>
+<td>同じ職業で絞り込み</td>
+</tr>
+<tr>
+<td>職分</td>
+<td>同じ職分で絞り込み</td>
+</tr>
+<tr>
+<td>攻撃範囲</td>
+<td>同じ攻撃範囲で絞り込み</td>
+</tr>
+<tr>
+<td>入手方法</td>
+<td>同じ入手方法で絞り込み</td>
+</tr>
+<tr>
+<td>募集タグ</td>
+<td>同じタグで絞り込み</td>
+</tr>
+<tr>
+<td>スキルタグ</td>
+<td>同じタグで絞り込み</td>
+</tr>
+</table>
+<div class="step">
+① 一覧の青いバッジ、またはクリック可能なセルをクリック<br>
+② アクティブなタブの検索条件へ自動的に追加<br>
+③ 自動で再検索
+</div>
+</div>
+
+<div class="card" id="sort">
+<h2>7. 並び替え</h2>
+<p>
+列見出しをクリックすると並び替えできます。
+</p>
+<table>
+<tr>
+<th>操作</th>
+<th>結果</th>
+</tr>
+<tr>
+<td>1回クリック</td>
+<td>昇順（▲）</td>
+</tr>
+<tr>
+<td>再クリック</td>
+<td>降順（▼）</td>
+</tr>
+</table>
+<div class="step">
+① 並び替えたい列名（オペレーター、★、ランク、コストなど）をクリック<br>
+② 昇順または降順で表示
+</div>
+<div class="tip">
+※「オペレーター」列（名前）は五十音順でソートされます。
+</div>
+</div>
+
+<div class="card" id="page">
+<h2>8. ページ切替</h2>
+<p>表の右上（分割時はそれぞれの表の上部）にあるミニナビゲーションでページを管理します。</p>
+<h3>表示件数変更</h3>
+<p>「表示:」のドロップダウンから1ページあたりの表示件数を変更できます。</p>
+<ul>
+<li>10件 / 20件 / 50件 / 100件 / 全件</li>
+</ul>
+
+<h3>ページ移動</h3>
+<div class="step">
+① 「◀」ボタンで前のページ、「▶」ボタンで次のページへ移動します。
+</div>
+</div>
+
+<div class="card" id="column">
+<h2>9. 列表示設定</h2>
+<p>
+表示する列の選択や、列の並び順をカスタマイズできます。
+</p>
+<h3>表示・非表示および列順変更</h3>
+<div class="step">
+① ヘッダーの「**⚙ 列設定**」ボタンを押します。<br>
+② 表示したい列のチェックボックスをオンにします。<br>
+③ 列名の左側にある「☰」マークを**ドラッグ＆ドロップ**して、任意の並び順に入れ替えます。<br>
+④ 「保存」を押すと一覧表に反映されます。
+</div>
+</div>
+
+<div class="card" id="json">
+<h2>10. JSON出力</h2>
+<p>
+データベースのマスターデータをJSONファイル（`arknights_data.json`）としてローカルに保存できます。
+</p>
+<div class="step">
+① ヘッダーの「**JSON**」ボタンを押す<br>
+② ブラウザ経由でJSONファイルがダウンロードされる
+</div>
+</div>
+
+<div class="card" id="theme">
+<h2>11. テーマ切替</h2>
+<p>
+画面表示をライトモードとダークモードで切り替えられます。
+</p>
+<div class="step">
+① ヘッダーの「**🌓 テーマ**」ボタンを押す<br>
+② 表示テーマがリアルタイムに切り替わる
+</div>
+<table>
+<tr>
+<th>テーマ</th>
+<th>説明</th>
+</tr>
+<tr>
+<td>ライトモード</td>
+<td>白や薄い青を基調とした明るい背景</td>
+</tr>
+<tr>
+<td>ダークモード</td>
+<td>黒や濃いグレーを基調とした、暗所でも見やすい背景</td>
+</tr>
+</table>
+</div>
+
+<div class="card" id="save">
+<h2>12. 保存される設定</h2>
+<p>
+以下のカスタマイズ設定はブラウザ（LocalStorage）に保存され、ページを閉じたり再読み込みしたりしても次回起動時に自動で引き継がれます。
+</p>
+<table>
+<tr>
+<th>設定項目</th>
+<th>ブラウザ保存</th>
+</tr>
+<tr>
+<td>テーマ設定（ライト / ダーク）</td>
+<td>〇</td>
+</tr>
+<tr>
+<td>列表示設定（表示・非表示および並び順）</td>
+<td>〇</td>
+</tr>
+</table>
+<div class="tip">
+※現在開いているタブ情報や検索条件、分割画面の状態は保存されず、ページ読み込み時に初期状態（検索タブ1つ）に戻ります。
+</div>
+</div>
+
+</div>
+
+<footer>
+アークナイツオペレーターデータベース 操作マニュアル
+</footer>
+
+</body>
+</html>

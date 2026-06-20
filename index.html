@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tools Portal</title>
+    <!-- 【追加】タブにアイコンを設定（同フォルダ内のsite.iconを読み込み） -->
+    <link rel="icon" href="site.icon" type="image/x-icon">
+    <style>
+        :root {
+            /* === ライトモード（明るい感じ）に色を変更 === */
+            
+            /* ベースとなる背景とセクション、カードの色 */
+            --bg-color: #f4f6f8;        /* 白すぎず、少し青みがかった薄いグレー */
+            --section-bg: #ffffff;      /* セクションの背景（白） */
+            --card-bg: #ffffff;         /* カードの背景（白） */
+            
+            /* テキストの色（黒すぎず、少し柔らかいグレー） */
+            --text-color: #2a3b4c;      
+            --text-muted: #6b7280;      /* 少し薄いグレー */
+            
+            /* アクセントカラー（明るさを保ちつつ、目に優しく） */
+            --ba-blue: #0ea5e9;         /* ブルーアーカイブ：少し鮮やかな青 */
+            --ak-orange: #f97316;       /* アークナイツ：少し鮮やかなオレンジ */
+            
+            /* ボーダーとヘッダー/フッターの色 */
+            --border-color: #e2e8f0;    
+            --header-bg: #ccffff;
+            --shadow-color: rgba(0, 0, 0, 0.05); /* 影を薄く */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 26px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--ba-blue), var(--ak-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            margin: 6px 0 0 0;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* ゲーム別セクション */
+        .game-section {
+            margin-bottom: 35px;
+            padding: 30px;
+            border-radius: 14px;
+            background-color: var(--section-bg);
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            box-shadow: 0 6px 16px var(--shadow-color); /* 全体的な立体感をプラス */
+        }
+
+        /* 左側のアクセントラインでゲームを識別 */
+        .game-section.blue-archive {
+            border-left: 6px solid var(--ba-blue);
+        }
+
+        .game-section.arknights {
+            border-left: 6px solid var(--ak-orange);
+        }
+
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .blue-archive .section-title { color: var(--ba-blue); }
+        .arknights .section-title { color: var(--ak-orange); }
+
+        .section-title span {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* グリッドレイアウト */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px var(--shadow-color);
+            border-color: var(--ba-blue); /* ホバー時のアクセント（ブルー） */
+        }
+
+        .card h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a2a3a; /* タイトルは少し濃く */
+        }
+
+        .card p {
+            margin: 0 0 20px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        /* ボタン */
+        .btn {
+            display: block;
+            text-align: center;
+            padding: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: opacity 0.2s, transform 0.1s, background-color 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ゲーム別のボタン色：ライトモードに合わせて明るく調整 */
+        .blue-archive .btn {
+            background-color: var(--ba-blue);
+            color: #ffffff;
+        }
+        .blue-archive .btn:hover { background-color: #0384c1; }
+
+        .arknights .btn {
+            background-color: var(--ak-orange);
+            color: #ffffff;
+        }
+        .arknights .btn:hover { background-color: #ea580c; }
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            background-color: var(--header-bg);
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Personal gaming tool portal</h1>
+        <p>SOCIAL GAME DATABASE SYSTEM</p>
+    </header>
+
+    <main>
+        
+        <!-- ==================== BLUE ARCHIVE SECTION ==================== -->
+        <section class="game-section blue-archive">
+            <h2 class="section-title">ブルーアーカイブ <span>SCHALE Control Block</span></h2>
+            <div class="grid">
+                
+                <!-- 生徒データベース -->
+                <div class="card">
+                    <div>
+                        <h3>生徒データベース</h3>
+                        <p>キヴォトスの生徒たちのステータス、スキル、固有武器、贈り物などの詳細情報を確認・検索できるデータベースです。</p>
+                    </div>
+                    <a href="ba-students/index.html" target="_blank" class="btn">ACCESS DATABASE</a>
+                </div>
+
+                <!-- ブルアカタイムラインマネージャー -->
+                <div class="card">
+                    <div>
+                        <h3>タイムラインマネージャー</h3>
+                        <p>総力戦・大決戦・制約解除決戦の編成およびボスのタイムラインを確認するための管理ツールです。</p>
+                        <p>タイムライン作成を目的としたツールではありません。</p>
+                    </div>
+                    <a href="ba-raidmgr/index.html" target="_blank" class="btn">ACCESS MANAGER</a>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== ARKNIGHTS SECTION ==================== -->
+        <section class="game-section arknights">
+            <h2 class="section-title">アークナイツ <span>Rhodes Island Control Block</span></h2>
+            <div class="grid">
+                
+                <!-- オペレーターデータベース -->
+                <div class="card">
+                    <div>
+                        <h3>オペレーターデータベース</h3>
+                        <p>ロドス・アイランドに所属するオペレーターのステータス、スキルを検索するデータベースです。</p>
+                    </div>
+                    <a href="ak-operators/index.html" target="_blank" class="btn">ACCESS DATABASE</a>
+                </div>
+
+                <!-- （予備枠）必要に応じてカードを追加可能 -->
+                <!-- 
+                <div class="card">
+                    <div>
+                        <h3>統合戦略マネージャー</h3>
+                        <p>ローグライク（統合戦略）の秘宝一覧や各分隊の進行状況を記録・確認するツールです。</p>
+                    </div>
+                    <a href="#" class="btn">ACCESS TOOL</a>
+                </div>
+                -->
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        &copy; 2026 Dedicated to all doctors and teachers.
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>アークナイツオペレーターデータベース</title>
+    <link rel="icon" type="image/png" href="アークナイツ.png">
+    <style>
+        :root { --bg-body: #d9e6eb; --bg-content: rgba(255, 255, 255, 0.85); --bg-card: rgba(255, 255, 255, 0.7); --bg-table: #ffffff; --bg-header: #4a6572; --bg-input: rgba(255, 255, 255, 0.9); --text-main: #2c3e50; --text-sub: #5c768d; --border-color: rgba(207, 218, 223, 0.6); --row-hover: #f4f8fa; --modal-bg: white; --accent: #2196f3; }
+        [data-theme="dark"] { --bg-body: #1a262b; --bg-content: rgba(38, 50, 56, 0.9); --bg-card: rgba(44, 62, 80, 0.7); --bg-table: #263238; --bg-header: #37474f; --bg-input: #37474f; --text-main: #eceff1; --text-sub: #b0bec5; --border-color: rgba(0, 0, 0, 0.3); --row-hover: #2f3d44; --modal-bg: #263238; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: var(--bg-body); display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.5; color: var(--text-main); }
+        h1 { color: var(--text-main); padding: 12px 24px; margin: 0; font-size: 1.4em; font-weight: 700; background: var(--bg-content); backdrop-filter: blur(8px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .title-left { display: flex; align-items: center; gap: 12px; }
+        .title-logo { height: 32px; width: auto; object-fit: contain; border-radius: 6px; }
+        .top-section { padding: 12px 24px 8px 24px; flex-shrink: 0; background: var(--bg-body); overflow: visible; z-index: 100; }
+        
+        .search-container { background: var(--bg-card); backdrop-filter: blur(12px); padding: 16px 16px 40px 16px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border: 1px solid var(--border-color); position: relative; z-index: 101; transition: padding 0.2s ease, margin 0.2s ease; }
+        .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; transition: opacity 0.2s; }
+        .search-item { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+        .search-item:has(.show) { z-index: 1000; }
+        .search-item label { font-size: 0.72em; font-weight: 700; color: var(--text-sub); }
+        
+        .search-container.collapsed { padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .search-container.collapsed .search-grid { display: flex; align-items: center; flex-grow: 1; gap: 12px; width: auto; }
+        
+        .search-container.collapsed .keyword-item,
+        .search-container.collapsed .stag-item { flex-direction: row; align-items: center; gap: 8px; flex-grow: 1; }
+        .search-container.collapsed .keyword-item label,
+        .search-container.collapsed .stag-item label { margin: 0; white-space: nowrap; font-size: 0.8em; }
+        
+        .search-container.collapsed .search-item:not(.keyword-item):not(.stag-item) { display: none !important; }
+        .search-container.collapsed .search-footer-row { margin-top: 0 !important; display: flex; align-items: center; }
+
+        .toggle-search-btn { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); background: var(--bg-header); color: white; border: 1px solid var(--border-color); border-radius: 20px; padding: 3px 18px; font-size: 0.78em; font-weight: bold; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 110; transition: 0.2s; white-space: nowrap; }
+        .toggle-search-btn:hover { background: var(--accent); }
+        
+        .search-container.collapsed .toggle-search-btn { position: static; transform: none; border-radius: 6px; padding: 4px 12px; font-size: 0.8em; box-shadow: none; background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .search-container.collapsed .toggle-search-btn:hover { background: var(--accent); color: white; }
+
+        .chip-container { min-height: 32px; padding: 2px 32px 2px 8px; border: 1px solid var(--border-color); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; background: var(--bg-input); cursor: pointer; position: relative; box-sizing: border-box; width: 100%; }
+        .chip { background-color: #5c768d; color: white; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; font-size: 0.85em; }
+        .chip.chip-range { display: inline-flex; align-items: center; padding: 2px 6px; }
+        .chip .remove-chip { cursor: pointer; margin-right: 4px; border-right: 1px solid rgba(255,255,255,0.3); padding-right: 4px; flex-shrink: 0; }
+        .placeholder { color: #90a4ae; font-size: 0.8em; }
+        .input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+        .input-wrapper input { width: 100%; padding: 6px 30px 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85em; box-sizing: border-box; background: var(--bg-input); color: var(--text-main); }
+        .main-clear-btn { position: absolute; right: 8px; cursor: pointer; font-weight: bold; color: #b0bec5; z-index: 10; }
+        
+        .tab-wrapper { display: flex; align-items: flex-end; gap: 4px; padding: 0 24px; margin-top: 4px; flex-shrink: 0; z-index: 50; }
+        .tab { padding: 8px 16px; background: rgba(74, 101, 114, 0.2); border: 1px solid var(--border-color); border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85em; font-weight: 600; color: var(--text-sub); display: flex; align-items: center; gap: 8px; transition: 0.2s; position: relative; min-width: 100px; max-width: 180px; }
+        .tab.active { background: var(--bg-table); color: var(--accent); padding-bottom: 10px; margin-bottom: -1px; z-index: 2; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
+        .tab:hover:not(.active) { background: rgba(74, 101, 114, 0.3); }
+        .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; }
+        .tab-close { opacity: 0.5; font-size: 1.2em; line-height: 1; margin-left: 4px; }
+        .tab-close:hover { opacity: 1; color: #f44336; }
+        .btn-add-tab { padding: 4px 12px; background: none; border: 1px dashed var(--text-sub); border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; color: var(--text-sub); font-weight: bold; margin-bottom: 2px; }
+        .btn-add-tab:hover { background: rgba(255,255,255,0.2); }
+        
+        .layout-controls { margin-left: auto; display: flex; gap: 2px; background: rgba(0,0,0,0.05); padding: 2px; border-radius: 6px; margin-bottom: 2px; }
+        .layout-btn { background: transparent; color: var(--text-sub); border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.8em; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
+        .layout-btn.active { background: var(--accent); color: white; }
+
+        .workspace-container { flex-grow: 1; display: flex; overflow: hidden; margin: 0 24px 24px 24px; gap: 12px; }
+        .workspace-container.view-vertical { flex-direction: column; }
+        
+        .table-view-wrapper { flex: 1; display: flex; flex-direction: column; background: var(--bg-table); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border: 1px solid var(--border-color); overflow: hidden; position: relative; }
+        .table-view-wrapper.active-side { border: 2px solid var(--accent); }
+        .table-header-info { padding: 8px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
+        .table-container { flex-grow: 1; overflow: auto; position: relative; }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+        th { background-color: var(--bg-header); color: white; position: sticky; top: 0; z-index: 20; padding: 10px 12px; text-align: left; border-bottom: 2px solid #37474f; font-size: 0.8em; }
+        th.sortable { cursor: pointer; }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); font-size: 0.85em; vertical-align: middle; background: transparent; word-wrap: break-word; white-space: normal; }
+        .sticky-col { position: sticky; left: 0; z-index: 15; background-color: var(--bg-table) !important; border-right: 2px solid var(--border-color) !important; }
+        th.sticky-col { z-index: 25; background-color: var(--bg-header) !important; }
+        td.clickable-cell { cursor: pointer; }
+        td.clickable-cell:hover { background-color: rgba(74, 101, 114, 0.1) !important; }
+        tr:hover td { background-color: var(--row-hover) !important; }
+        .cell-badge { background-color: rgba(176, 190, 197, 0.2); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 1px 6px; font-size: 0.8em; font-weight: 600; margin: 1px; display: inline-block; cursor: pointer; }
+        .highlight { background-color: #fff59d; color: #2c3e50; font-weight: 600; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: var(--modal-bg); margin: 5% auto; padding: 20px; width: 90%; max-height: 85%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; color: var(--text-main); }
+        /* --- index.html の既存の .dropdown-list と .dropdown-item を以下に差し替えてください --- */
+
+.dropdown-list { 
+    display: none; 
+    position: absolute; 
+    top: calc(100% + 4px); 
+    left: 0; 
+    right: 0; 
+    background: var(--bg-table); 
+    border-radius: 8px; 
+    z-index: 2000; 
+    max-height: 280px; 
+    overflow-y: auto; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    border: 1px solid var(--border-color); 
+}
+
+/* スキルタグ（#list-sTag）が展開された時だけ、ワイドな5列グリッドにする */
+#list-sTag.show {
+    display: grid !important;
+    width: 750px; /* 横幅を大幅に拡大 */
+    grid-template-columns: repeat(5, 1fr); /* きっちり5列に分割 */
+    gap: 4px;
+    padding: 6px;
+}
+
+/* 通常のドロップダウン用の show クラス（スキルタグ以外はこれまで通り縦一列） */
+.dropdown-list.show:not(#list-sTag) { 
+    display: block; 
+}
+
+/* スキルタグ内のインライン検索ボックスは5列分の幅をいっぱいに使う */
+#list-sTag > div:first-child {
+    grid-column: span 5;
+}
+
+.dropdown-item { 
+    padding: 8px 12px; 
+    cursor: pointer; 
+    border-bottom: 1px solid var(--border-color); 
+    font-size: 0.85em; 
+    box-sizing: border-box;
+}
+
+/* スキルタグ内の各項目は、グリッド内で見やすくなるよう中央寄せと枠線を調整 */
+#list-sTag .dropdown-item {
+    text-align: center;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.dropdown-item:hover {
+    background: var(--row-hover);
+}
+
+#list-sTag .dropdown-item:hover {
+    border-color: var(--accent);
+}
+
+.dropdown-item.selected { 
+    background-color: #4a6572; 
+    color: white; 
+    font-weight: 600; 
+}
+
+/* スキルタグの選択中アイテムはアクセントカラーで目立たせる */
+#list-sTag .dropdown-item.selected {
+    background-color: var(--accent);
+}
+        .show { display: block; }
+        
+        .range-monospace { font-family: monospace; font-size: 13px; letter-spacing: 0px; line-height: 1.1; white-space: pre-wrap; display: inline-block; text-align: left; }
+        .range-invisible-space { opacity: 0 !important; visibility: hidden; }
+        .cv-input-style { width: 100%; border: none; background: transparent; font-size: 0.85em; color: var(--text-main); outline: none; padding: 4px 0; min-width: 60px; flex-grow: 1; }
+        
+        .search-footer-mini { display: flex; align-items: center; gap: 8px; font-size: 0.85em; }
+        .page-size-selector { font-size: 0.9em; color: var(--text-main); display: flex; align-items: center; gap: 4px; margin-right: 12px; }
+        .page-size-selector select { padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); cursor: pointer; }
+        .pagination-mini { display: flex; gap: 2px; align-items: center; }
+        .btn-page-mini { padding: 2px 6px; font-size: 0.8em; cursor: pointer; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); border-radius: 4px; }
+        .btn-page-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-page-mini.active { background: var(--bg-header); color: white; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; }
+        
+        
+/* --- index.html の先ほどの追加箇所を以下に差し替えてください --- */
+
+/* 1. 各検索項目の枠が、隣の縦伸びに引っ張られて一緒に伸びるのを防ぐ（維持） */
+.search-item {
+    position: relative;
+    align-self: flex-start; 
+    align-items: start;     
+}
+
+/* 2. スキルタグの検索アイテム（コンテナ全体）の横幅設定 */
+.search-item.stag-item {
+    grid-column: span 2;
+    min-width: 450px;
+    width: 450px;
+}
+
+/* 3. デフォルト（検索フィルターが開いている時）は「3列」
+      ★「選択なし」が下寄りにズレるのを防ぐため、バッジ（.chip）が存在するときだけグリッド化します */
+.stag-item #chips-sTag:has(.chip) {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 4px;
+    width: 100%;
+    padding: 4px 0;
+    box-sizing: border-box;
+}
+
+/* 4. 検索フィルターが閉じている時は「6列」に凝縮（バッジがあるときのみ） */
+#searchContainer.collapsed .stag-item #chips-sTag:has(.chip) {
+    grid-template-columns: repeat(6, 1fr) !important;
+}
+
+/* チップ（バッジ）自体のスタイル調整 */
+.stag-item #chips-sTag .chip {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    margin: 0;
+    padding: 4px 6px; 
+    font-size: 0.75em; 
+    box-sizing: border-box;
+    text-align: center;
+    width: 100%;
+}
+
+/* 5. 全てのドロップダウンリストの出現位置を共通化（隙間をゼロに） */
+.dropdown-list { 
+    display: none; 
+    position: absolute; 
+    /* 余計な +4px を排除し、枠の真下にピッタリくっつくように修正 */
+    top: 100% !important; 
+    left: 0; 
+    right: 0; 
+    background: var(--bg-table); 
+    border-radius: 8px; 
+    z-index: 2000; 
+    max-height: 280px; 
+    overflow-y: auto; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+    border: 1px solid var(--border-color); 
+}
+
+/* 6. 下に開くスキルタグのドロップダウンメニュー（5列・ワイド幅） */
+#list-sTag.show {
+    display: grid !important;
+    width: 750px; 
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 4px;
+    padding: 6px;
+    box-sizing: border-box;
+    z-index: 2500 !important; 
+    /* スキルタグも同様に、余計な隙間を開けず100%ぴったりから開始 */
+    top: 100% !important; 
+}
+
+/* 通常のドロップダウン用の show クラス（スキルタグ以外） */
+.dropdown-list.show:not(#list-sTag) { 
+    display: block; 
+}
+
+/* スキルタグ内のインライン検索ボックス */
+#list-sTag > div:first-child {
+    grid-column: span 5; 
+}
+        /* --- index.html の <style> の最下部に、以下のコード【だけ】をそのまま追記してください --- */
+
+/* スキルタグの枠（コンテナ）だけを、他を一切壊さずに「2つ分＋＠」の幅に広げる */
+.search-item.stag-item {
+    width: 468px !important;
+    min-width: 468px !important;
+    max-width: 468px !important;
+}
+
+/* スキルタグのバッジ（チップ）は、フィルターが開いている時は「3列」 */
+.stag-item #chips-sTag:has(.chip) {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important; 
+    gap: 4px !important;
+    width: 100% !important;
+    padding: 4px 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* 検索フィルターが閉じている時は、バッジ（チップ）を「6列」に凝縮 */
+#searchContainer.collapsed .stag-item #chips-sTag:has(.chip) {
+    grid-template-columns: repeat(6, 1fr) !important;
+}
+
+/* バッジ自体の文字サイズと余白の調整 */
+.stag-item #chips-sTag .chip {
+    display: flex !important;
+    justify-content: space-between !important; 
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 4px 6px !important; 
+    font-size: 0.75em !important; 
+    box-sizing: border-box !important;
+    text-align: center !important;
+    width: 100% !important;
+}
+
+/* スキルタグの下に開くリストだけを、元の「5列（750pxのワイド幅）」に強制固定 */
+#list-sTag.show {
+    display: grid !important;
+    width: 750px !important; 
+    grid-template-columns: repeat(5, 1fr) !important; 
+    gap: 4px !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    z-index: 2500 !important; 
+}
+
+/* スキルタグ内のインライン検索ボックスを5列分に結合 */
+#list-sTag > div:first-child {
+    grid-column: span 5 !important; 
+}
+/* --- index.html の <style> の最下部に、以下のコード【だけ】をそのまま追記してください --- */
+
+/* フィルターが「閉じている時」限定で、キーワードとスキルタグを半々の幅（50%ずつ）にする */
+#searchContainer.collapsed .search-item.keyword-item,
+#searchContainer.collapsed .search-item.stag-item {
+    /* 2つのアイテムが隙間（gap）を考慮してきれいに半分ずつになるよう計算 */
+    width: calc(50% - 4px) !important;
+    min-width: calc(50% - 4px) !important;
+    max-width: calc(50% - 4px) !important;
+}
+
+/* 念のため、フィルター開閉時のスキルタグのバッジ列数を維持（開時:3列 / 閉時:6列） */
+.stag-item #chips-sTag:has(.chip) {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important; 
+    gap: 4px !important;
+    width: 100% !important;
+    padding: 4px 0 !important;
+    box-sizing: border-box !important;
+}
+#searchContainer.collapsed .stag-item #chips-sTag:has(.chip) {
+    grid-template-columns: repeat(6, 1fr) !important;
+}
+
+/* バッジのスタイル調整 */
+.stag-item #chips-sTag .chip {
+    display: flex !important;
+    justify-content: space-between !important; 
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 4px 6px !important; 
+    font-size: 0.75em !important; 
+    box-sizing: border-box !important;
+    text-align: center !important;
+    width: 100% !important;
+}
+
+/* スキルタグの下に開くリストは、自身の枠の左下から元の「5列（750px幅）」で安全に開く */
+#list-sTag.show {
+    display: grid !important;
+    position: absolute !important;
+    width: 750px !important; 
+    grid-template-columns: repeat(5, 1fr) !important; 
+    gap: 4px !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    z-index: 9999 !important; 
+    top: 100% !important; 
+    left: 0 !important;
+}
+#list-sTag > div:first-child {
+    grid-column: span 5 !important; 
+}
+/* ドロップダウンのリストを初期状態で隠す */
+.dropdown-list {
+    display: none !important;
+    position: absolute;
+    background: var(--bg-table);
+    border: 1px solid var(--border-color);
+    z-index: 1000;
+}
+
+/* 「開いている」時だけ表示する */
+.dropdown-list.show {
+    display: block !important;
+}
+
+/* CVの3列グリッド表示を制御 */
+#list-cv.show {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+/* 検索キーワードに一致した部分の強調表示スタイル */
+mark.highlight {
+    background-color: #ffeb3b; /* 鮮やかな黄色 */
+    color: #000000;            /* 文字色は黒 */
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+/* ==========================================================================
+   入手方法・募集タグ・スキルタグのバッジ用スタイル
+   ========================================================================== */
+
+/* バッジをきれいに並べるための外枠（td）の調整 */
+.clickable-cell, 
+td {
+    /* セル内でバッジが縦・横に自然に折り返して並ぶようにする設定 */
+    vertical-align: middle;
+}
+
+/* 各バッジ（チップ）の共通基本デザイン */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 2px 3px;
+    font-size: 0.82em;
+    font-weight: 500;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    white-space: nowrap; /* バッジの途中で文字が改行されるのを防ぐ */
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* マウスホバー時に少し浮き上がらせる演出 */
+.badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+    filter: brightness(0.95);
+}
+
+/* 🌟 各列ごとの色分け設定（テーマに合わせてお好みで変更してください） */
+
+/* ① 入手方法のバッジ色（例：落ち着いたブルーグレー系） */
+.badge-obtain {
+    background-color: #e9ecef;
+    color: #495057;
+    border-color: #ced4da;
+}
+/* ダークテーマ用（もしあれば） */
+[data-theme="dark"] .badge-obtain,
+.theme-dark .badge-obtain {
+    background-color: #343a40;
+    color: #f8f9fa;
+    border-color: #495057;
+}
+
+/* ② 募集タグのバッジ色（例：柔らかなグリーン系） */
+.badge-recruitTags {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #c8e6c9;
+}
+[data-theme="dark"] .badge-recruitTags,
+.theme-dark .badge-recruitTags {
+    background-color: #1b5e20;
+    color: #e8f5e9;
+    border-color: #2e7d32;
+}
+
+/* ③ スキルタグのバッジ色（例：鮮やかなアクア・ブルー系） */
+.badge-sTag {
+    background-color: #e3f2fd;
+    color: #1565c0;
+    border-color: #bbdefb;
+}
+[data-theme="dark"] .badge-sTag,
+.theme-dark .badge-sTag {
+    background-color: #0d47a1;
+    color: #e3f2fd;
+    border-color: #1565c0;
+}
+
+/* 🌟 バッジ内で検索キーワードがヒットした時の強調表示調整 */
+.badge mark.highlight {
+    background-color: #ffeb3b; /* 鮮やかな黄色 */
+    color: #000000;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+    </style>
+    <script>
+        document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
+    </script>
+</head>
+<body>
+
+    <h1>
+        <div class="title-left">
+            <img src="アークナイツ.png" class="title-logo" alt="" onerror="this.style.display='none'">
+            <span>アークナイツデータベース</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn-action" style="background:#455a64; color:#fff;" onclick="toggleDarkMode()">🌓 テーマ</button>
+            <button class="btn-action" style="background:#607d8b; color:#fff;" onclick="openColumnModal()">⚙ 列設定</button>
+            <button class="btn-action" style="background:#4caf50; color:#fff;" onclick="exportData()">JSON</button>
+            <button class="btn-action" style="background:#009688; color:#fff;" onclick="openManual()">❔ ヘルプ</button>
+        </div>
+    </h1>
+
+    <div class="top-section">
+        <div class="search-container" id="searchContainer">
+            <div class="search-grid" id="searchGrid"></div>
+            <div class="search-footer-row" style="display:flex; justify-content: flex-end; margin-top:8px;">
+                <button style="background:none; color:var(--text-sub); border:1px solid var(--text-sub); padding:4px 12px; border-radius:6px; cursor:pointer; font-size:0.8em;" onclick="allClear()">検索リセット</button>
+            </div>
+            <button class="toggle-search-btn" id="toggleSearchBtn" onclick="toggleSearchArea()">▲ 検索フィルターを閉じる</button>
+        </div>
+    </div>
+
+    <div class="tab-wrapper" id="tabBar">
+        <button class="btn-add-tab" onclick="addTab()">＋</button>
+        
+        <div class="layout-controls">
+            <button class="layout-btn" id="layout-single" onclick="changeLayout('single')">▢ 通常</button>
+            <button class="layout-btn" id="layout-horizontal" onclick="changeLayout('horizontal')">◧ 左右分割</button>
+            <button class="layout-btn" id="layout-vertical" onclick="changeLayout('vertical')">◪ 上下分割</button>
+        </div>
+    </div>
+
+    <div class="workspace-container" id="workspace">
+        <div class="table-view-wrapper" id="leftView" onclick="setActiveSide('left')">
+            <div class="table-header-info">
+                <div id="leftTabLabel" style="font-weight:700; font-size:0.85em; color:var(--accent);"></div>
+                <div class="search-footer-mini" id="leftFooter"></div>
+            </div>
+            <div class="table-container">
+                <table id="leftTable">
+                    <thead id="leftHead"></thead>
+                    <tbody id="leftBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="table-view-wrapper" id="rightView" style="display:none;" onclick="setActiveSide('right')">
+            <div class="table-header-info">
+                <div id="rightTabLabel" style="font-weight:700; font-size:0.85em; color:var(--accent);"></div>
+                <div class="search-footer-mini" id="rightFooter"></div>
+            </div>
+            <div class="table-container">
+                <table id="rightTable">
+                    <thead id="rightHead"></thead>
+                    <tbody id="rightBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="columnModal" class="modal">
+        <div class="modal-content" style="width:400px; margin: 5% auto;">
+            <h3>列設定</h3>
+            <div id="columnListContainer" style="max-height:400px; overflow-y:auto; margin-bottom:20px;"></div>
+            <div style="text-align: right;">
+                <button onclick="closeModal('columnModal')" class="btn-action">キャンセル</button>
+                <button onclick="saveColumnSettings()" class="btn-action" style="background:#2196f3; color:white; margin-left:10px;">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="db.js"></script>
+</body>
+</html>

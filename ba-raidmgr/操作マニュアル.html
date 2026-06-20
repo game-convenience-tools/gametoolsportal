@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ブルアカタイムラインマネージャー 操作マニュアル</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; line-height: 1.8; color: #374151; max-width: 950px; margin: 30px auto; padding: 0 25px; background-color: #f8fafc; }
+        .container { background: #ffffff; padding: 45px; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }
+        h1 { color: #0284c7; border-bottom: 3px solid #0284c7; padding-bottom: 15px; margin-bottom: 40px; text-align: center; font-size: 1.8em; }
+        h2 { color: #1e293b; margin-top: 40px; background: #f0f9ff; padding: 12px 20px; border-radius: 10px; border-left: 6px solid #0ea5e9; font-size: 1.4em; }
+        p { margin-bottom: 15px; }
+        ul { margin-bottom: 25px; padding-left: 20px; }
+        li { margin-bottom: 12px; }
+        strong { color: #0f172a; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid #e2e8f0; }
+        .caution { background: #fffbeb; border: 1px solid #fef3c7; border-left: 6px solid #f59e0b; padding: 20px; margin-top: 40px; border-radius: 8px; }
+        .footer { font-size: 0.85em; color: #94a3b8; margin-top: 50px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ブルアカタイムラインマネージャー 操作マニュアル</h1>
+
+        <p>ブルーアーカイブの攻略タイムラインを効率的に管理するためのガイドです。画面のレイアウトに基づいた順序（Z順）で解説します。</p>
+
+        <h2>1. 属性・戦場設定（画面上部・左側）</h2>
+        <p>攻略対象の基本情報を入力します。ここで設定した内容は、履歴保存時の検索条件として利用されます。</p>
+        <ul>
+            <li><strong>戦闘タイプとボス選択:</strong> 「総力戦/大決戦」か「制約解除決戦」を切り替えます。制約解除決戦では難易度が自動的に「段階（数値）」入力へと切り替わります。</li>
+            <li><strong>属性詳細:</strong> 地形（市街地・屋外・屋内）やボスの装甲タイプを指定します。</li>
+            <li><strong>保存タイトル:</strong> データの名称を入力します。既存のタイトルと同じ名前で保存するとデータが上書き更新されます。</li>
+        </ul>
+
+        <h2>2. 保存と履歴管理（画面上部・右側）</h2>
+        <p>データの保存、過去データの呼び出し、および保存済みデータの管理を行います。</p>
+        <ul>
+            <li><strong>保存・上書き:</strong> 設定した構成をブラウザに記録します。</li>
+            <li><strong>履歴の並び替えと検索:</strong> 履歴リスト左側のハンドルをドラッグして順序を調整できます。また、検索窓や属性フィルターで目的のデータを絞り込めます。</li>
+            <li><strong>行単位の管理:</strong> 履歴リストの各行にあるボタンから、<strong>個別のエクスポート（JSON出力）</strong>や<strong>個別の削除</strong>が可能です。</li>
+            <li><strong>インポートと一括出力:</strong> JSONファイルの読み込みや、全履歴の一括バックアップ（全エクスポート）が可能です。</li>
+        </ul>
+
+        <h2>3. 編成設定（画面中央）</h2>
+        <p>出撃させる部隊の情報を構築します。柔軟な配置・育成状況の記録が可能です。</p>
+        <ul>
+            <li><strong>生徒の登録と育成段階（★）:</strong> 名前を入力すると候補が表示され、アイコンが反映されます。各生徒スロットの<strong>★ボタン</strong>をクリックすることで、その生徒の育成段階を記録・表示できます。</li>
+            <li><strong>編成順のドラッグ調整:</strong> <code>STRIKER</code>および<code>SPECIAL</code>の各枠内で、左側のハンドルをドラッグして配置順（位置順）を自由に入れ替えられます。</li>
+            <li><strong>開始スキルの管理:</strong> チェックを入れると初期手札として指定され、選択した順序に従って「①、②、③」と番号が表示されます。</li>
+        </ul>
+
+        <h2>4. タイムライン編集と表示調整（画面下部）</h2>
+        <p>メインとなるタイムラインの作成と、実戦に合わせた表示カスタマイズを行います。</p>
+        <ul>
+            <li><strong>タイムライン入力・出力欄:</strong> 画面左下のテキストエリアを利用します。<strong>「時間・生徒名・スキル名」をタブまたは全半角スペース区切り</strong>にしたテキストを貼り付けることで一括反映でき、現在の内容をタブ区切り形式でコピーして外部へ出力することも可能です。</li>
+            <li><strong>個別編集とカラー設定:</strong> セルを直接クリックして修正できます。また、セルを<strong>右クリック</strong>するとカラーパレットが表示され、フェーズごとの色分けなどが可能です。</li>
+            <li><strong>大画面モード:</strong> 画面上部のスイッチで有効にすると、タイムラインがマルチカラム表示になります。</li>
+            <li><strong>エリア分割（ハサミアイコン）:</strong> 大画面モード中、行の右端にあるハサミアイコンをクリックすると、その地点でタイムラインが分割され、次の列へ表示が送られます。</li>
+        </ul>
+
+        <h2>5. その他</h2>
+        <ul>
+            <li><strong>テーマ切り替え:</strong> 画面右上のアイコンから「アロナ（ライト）」と「プラナ（ダーク）」を切り替えることができます。</li>
+        </ul>
+        <ul>
+            <li><strong>クリアボタン（ゴミ箱アイコン）:</strong>
+                画面上部にある「クリア」ボタンをクリックすると、現在編集中の編成データおよびタイムラインの内容を一括ですべて消去します。新しいタイムラインの作成をゼロから始める際に使用してください。（※保存済みの履歴データは削除されません）
+            </li>
+            <li><strong>マスターデータのメンテナンス (ba_master.js):</strong>
+                本ツールと同じフォルダ内にある <code>ba_master.js</code> をテキストエディタ（メモ帳やVSCodeなど）で編集することで、アプリ内のデータをカスタマイズできます。
+                <ul>
+                    <li><strong>総力戦ボスの追加:</strong> <code>bosses</code> 配列に新しいボス名を追加してください。</li>
+                    <li><strong>制約解除決戦ボスの追加:</strong> <code>limitBreakBosses</code> 配列に新しいボス名を追加してください。</li>
+                    <li><strong>地形の追加:</strong> <code>terrains</code> 配列に新しい地形を追加してください。</li>
+                    <li><strong>難易度の追加:</strong> <code>difficulties</code> 配列に新しい難易度を追加してください。</li>
+                    <li><strong>装甲タイプの追加:</strong> <code>armorTypes</code> 配列に新しい装甲を追加してください。各色の <code>color</code> や <code>darkColor</code> の16進数コードを書き換えることで、属性ごとの表示色を変更可能です。</li>
+                    <li><strong>生徒の追加:</strong> <code>characters</code> 配列の末尾に <code>"キャラ名",</code> を追記することで、入力候補に表示されるようになります。</li>
+                </ul>
+            </li>
+        </ul>
+
+        <div class="caution">
+            <strong>重要：データのバックアップについて</strong><br>
+            本ツールのデータはブラウザ（ローカルストレージ）に保存されています。キャッシュの削除やシークレットモード利用で消失する可能性があるため、重要な構成は定期的に「全エクスポート」機能を利用してJSONファイルとして保管してください。
+        </div>
+
+        <div class="footer">
+            ブルアカ タイムラインマネージャー プロジェクト
+        </div>
+    </div>
+</body>
+</html>
