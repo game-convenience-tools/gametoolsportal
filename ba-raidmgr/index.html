@@ -23,7 +23,7 @@
 
 <meta name="twitter:card" content="summary_large_image">
 
-    <title>ブルアカ総力戦・大決戦・制約解除決戦 タイムラインマネージャー | GameToolsPortal</title>
+    <title>ブルアカ 総力戦・大決戦・制約解除決戦 タイムラインマネージャー | GameToolsPortal</title>
     <link rel="icon" type="image/jpeg" href="favicon.jpg">
     <script>
         // Tailwind Play CDN の production 警告を抑制（ローカルファイル使用のため）
@@ -797,6 +797,15 @@
                                     setCellColors({});
                                 }} className="px-3 py-1 rounded-xl text-xs border font-bold text-rose-500 border-rose-200 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/20 transition-colors">
                                     <i className="fa-solid fa-trash-can mr-1"></i>クリア
+                                </button>
+                                {/* ポータルへ戻るボタン */}
+                                <button 
+                                    onClick={() => window.location.href = '../'} 
+                                    className="px-3 py-1 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 text-cyan-600 dark:text-cyan-400 rounded-xl text-xs font-bold hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors flex items-center gap-1.5"
+                                    title="ポータルサイトへ戻る"
+                                >
+                                    <i className="fa-solid fa-house"></i>
+                                    <span>ポータル</span>
                                 </button>
                                 <button onClick={()=>window.open('操作マニュアル.html', '_blank')} className="px-3 py-1 rounded-xl text-xs border font-bold text-sky-500 border-sky-200 hover:bg-sky-50 dark:border-sky-900 dark:hover:bg-sky-950/20 transition-colors">
                                     <i className="fa-solid fa-circle-question mr-1"></i>ヘルプ
