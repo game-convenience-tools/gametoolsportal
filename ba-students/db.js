@@ -23,57 +23,61 @@ function initDatabase() {
             buildDynamicDropdowns(cachedStudents);
             renderStudentsList(cachedStudents);
 
-// 🌟【新設・アイコン付き】タイトルと同じ高さの右端にヘルプボタンを追加する処理
+// 🌟【新設・アイコン付き】タイトルと同じ高さの右端に「ポータル」と「ヘルプ」ボタンを追加する処理
             const titleSection = document.querySelector('.title-section') || document.querySelector('header');
             if (titleSection) {
                 // タイトルセクションのフレックス配置を最適化
                 titleSection.style.display = 'flex';
                 titleSection.style.justifyContent = 'space-between';
                 titleSection.style.alignItems = 'center';
-                titleSection.style.position = 'relative';
 
-                // 重複防止チェック
-                if (!document.getElementById('headerHelpBtn')) {
-                    const helpBtn = document.createElement('button');
-                    helpBtn.id = 'headerHelpBtn';
-                    
-                    // Font Awesome の fa-circle-question クラスを流し込み
-                    helpBtn.innerHTML = '<i class="fa-regular fa-circle-question" style="margin-right: 6px; font-size: 14px;"></i>ヘルプ';
-                    
-                    // デザイン崩れを防ぐためのスタイリング
-                    helpBtn.style.display = 'inline-flex';
-                    helpBtn.style.alignItems = 'center';
-                    helpBtn.style.padding = '6px 14px';
-                    helpBtn.style.fontSize = '13px';
-                    helpBtn.style.fontWeight = 'bold';
-                    helpBtn.style.cursor = 'pointer';
-                    helpBtn.style.border = '1px solid var(--ba-blue, #00B2FF)';
-                    helpBtn.style.borderRadius = '4px';
-                    
-                    // 🌟【通常時の配色変更】透明ではなく、テーマカラーを15%の濃さでうっすら敷きます
-                    helpBtn.style.background = 'rgba(0, 178, 255, 0.15)'; 
-                    helpBtn.style.color = 'var(--ba-blue, #00B2FF)';
-                    helpBtn.style.transition = 'all 0.2s ease';
-                    helpBtn.style.marginLeft = 'auto'; // 確実に右端へ寄せる
-
-                    // 🌟ホバー時の視覚エフェクト（100%の濃さになり、文字が白に反転します）
-                    helpBtn.onmouseover = () => {
-                        helpBtn.style.background = 'var(--ba-blue, #00B2FF)';
-                        helpBtn.style.color = '#ffffff';
-                    };
-                    // 🌟マウスが離れたら、再び15%の少し濃いめの薄さに戻します
-                    helpBtn.onmouseout = () => {
-                        helpBtn.style.background = 'rgba(0, 178, 255, 0.15)';
-                        helpBtn.style.color = 'var(--ba-blue, #00B2FF)';
-                    };
-
-                    // クリック時に別タブで manual.html を開く
-                    helpBtn.onclick = () => {
-                        window.open('manual.html', '_blank');
-                    };
-
-                    titleSection.appendChild(helpBtn);
+                // 既存のコンテナがあれば取得、なければ新規作成
+                let btnContainer = titleSection.querySelector('.header-btn-container');
+                if (!btnContainer) {
+                    btnContainer = document.createElement('div');
+                    btnContainer.className = 'header-btn-container';
+                    btnContainer.style.cssText = 'display: flex !important; align-items: center !important; gap: 8px !important; margin-left: auto !important; box-sizing: border-box !important;';
+                    titleSection.appendChild(btnContainer);
+                } else {
+                    btnContainer.innerHTML = ''; // 重複防止のため一度クリア
                 }
+
+                // ─── 📌 【色修正】親画面へ戻る「ポータル」ボタン（薄めの水色デザイン） ───
+                const portalBtn = document.createElement('button');
+                portalBtn.className = 'portal-btn';
+                portalBtn.innerHTML = '<i class="fa-solid fa-house"></i> ポータル';
+                portalBtn.onclick = function() {
+                    location.href = '../index.html'; // 階層構造に合わせた正しい相対パスです
+                };
+                
+                // 背景色を薄めの水色（#B3E5FC）、文字色を全体のメイン文字色（var(--text-main)）にして視認性を確保
+                portalBtn.style.cssText = 'background: #B3E5FC !important; color: var(--text-main, #2C3E50) !important; border: 1px solid #81D4FA !important; padding: 6px 12px !important; font-size: 13px !important; font-weight: bold !important; border-radius: 4px !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; transition: background 0.2s ease, border-color 0.2s ease !important; height: 32px !important;';
+                
+                // ホバー時に少しだけ濃い水色にするエフェクト
+                portalBtn.onmouseenter = function() { 
+                    this.style.setProperty('background', '#81D4FA', 'important'); 
+                };
+                portalBtn.onmouseleave = function() { 
+                    this.style.setProperty('background', '#B3E5FC', 'important'); 
+                };
+
+                // ─── 📌 既存の「ヘルプ」ボタンの生成 ───
+                const helpBtn = document.createElement('button');
+                helpBtn.className = 'help-btn';
+                helpBtn.innerHTML = '<i class="fa-solid fa-circle-question"></i> ヘルプ';
+                helpBtn.onclick = function() {
+                    if (typeof openHelpModal === 'function') {
+                        openHelpModal();
+                    }
+                };
+                helpBtn.style.cssText = 'background: var(--ba-blue, #00B2FF) !important; color: #ffffff !important; border: none !important; padding: 6px 12px !important; font-size: 13px !important; font-weight: bold !important; border-radius: 4px !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; box-sizing: border-box !important; transition: background 0.2s ease !important; height: 32px !important;';
+                
+                helpBtn.onmouseenter = function() { this.style.opacity = '0.9'; };
+                helpBtn.onmouseleave = function() { this.style.opacity = '1'; };
+
+                // コンテナに「ポータル」→「ヘルプ」の順で追加
+                btnContainer.appendChild(portalBtn);
+                btnContainer.appendChild(helpBtn);
             }
 
             // 🌟【確定版】右端見切れ対策 ＆ 上部2段固定用の基本CSS
