@@ -11,6 +11,10 @@ const ALL_COLUMNS = [
     { id: 'range', label: '攻撃範囲', width: '100px', sortable: true },
     { id: 'trait', label: '特性', width: '180px', sortable: true },
     { id: 'ttag', label: '特性タグ', width: '150px', sortable: true },
+    { id: 'd1sdtl', label: '第1素質詳細', width: '250px', sortable: true },
+    { id: 'd1stag', label: '第1素質タグ', width: '150px', sortable: true },
+    { id: 'd2sdtl', label: '第2素質詳細', width: '250px', sortable: true },
+    { id: 'd2stag', label: '第2素質タグ', width: '150px', sortable: true },
     { id: 'cost', label: 'コスト', width: '60px', sortable: true },
     { id: 'block', label: 'ブロック数', width: '90px', sortable: true }, 
     { id: 'hp', label: 'HP', width: '80px', sortable: true },
@@ -318,6 +322,28 @@ function handleSearch(tabId, side) {
                 if (tab.cvQuery && !targetCV.includes(tab.cvQuery.toLowerCase())) { isFilterMatch = false; break; }
                 continue;
             }
+            // 🌟 統合された sTag フィルターの条件判定（OR検索へ修正）
+            if (k === 'sTag' && tab.selections.sTag && tab.selections.sTag.length > 0) {
+                const allOperatorTags = [];
+                // 1. 特性・第1素質・第2素質タグを収集
+                ['ttag', 'd1stag', 'd2stag'].forEach(key => {
+                    if (char[key] && typeof char[key] === 'string') {
+                        char[key].split(',').forEach(t => allOperatorTags.push(t.trim()));
+                    }
+                });
+                // 2. スキルタグを収集
+                if (char.skills) {
+                    char.skills.forEach(s => {
+                        if (s && s.tag) {
+                            s.tag.split(',').forEach(t => allOperatorTags.push(t.trim()));
+                        }
+                    });
+                }
+                // 🌟 .every を .some に変更し、どれか一つでも合致すれば合格とする（OR検索）
+                const hasTag = tab.selections.sTag.some(sel => allOperatorTags.includes(sel));
+                if (!hasTag) { isFilterMatch = false; break; }
+                continue;
+            }
             if(tab.selections[k] && tab.selections[k].length && !['sPriority', 'sSpType', 'sTrigger', 'sTag'].includes(k)) {
                 if(['obtain', 'recruitTags'].includes(k)) {
                     const rawVals = (Array.isArray(char[k]) ? char[k] : String(char[k] ?? '').split(',')).map(s => normalizeVal(s));
@@ -336,6 +362,10 @@ function handleSearch(tabId, side) {
         const rangeMatched = kw && (char.range || "").toLowerCase().includes(kw);
         const traitMatched = char.trait && char.trait.toLowerCase().includes(kw);
         const ttagMatched = char.ttag && char.ttag.toLowerCase().includes(kw);
+        const d1sdtlMatched = char.d1sdtl && char.d1sdtl.toLowerCase().includes(kw);
+        const d1stagMatched = char.d1stag && char.d1stag.toLowerCase().includes(kw);
+        const d2sdtlMatched = char.d2sdtl && char.d2sdtl.toLowerCase().includes(kw);
+        const d2stagMatched = char.d2stag && char.d2stag.toLowerCase().includes(kw);
 
         // 🌟 修正の核心：スキル個別のフィルタリング
         const filteredSkills = (char.skills || []).filter(s => {
@@ -344,10 +374,6 @@ function handleSearch(tabId, side) {
             // 1. まずドロップダウンのスキル系条件（優先度・回復・発動・スキルタグ）で厳格に絞り込む
             if(tab.selections.sSpType.length && !tab.selections.sSpType.some(sel => normalizeVal(sel) === normalizeVal(s.spType))) return false;
             if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
-            if(tab.selections.sTag.length) {
-                const sTags = (Array.isArray(s.tag) ? s.tag : String(s.tag ?? '').split(',').map(t => t.trim())).map(t => normalizeVal(t));
-                if(!tab.selections.sTag.some(t => sTags.includes(normalizeVal(t)))) return false;
-            }
             
             // 2. 上記のスキルタグ等に合格した上で、キーワード検索（kw）が入力されている場合の判定
             if(kw) {
@@ -362,8 +388,8 @@ function handleSearch(tabId, side) {
 
         const hasSkillFilter = tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
         
-        // 🌟 修正：キーワードがある場合、オペレーター自身（名前等、特性、特性タグ含む）か「条件を満たしたスキル」のどちらかもキーワードにヒットしていなければ除外
-        if (kw && !nameMatched && !cvMatched && !rangeMatched && !traitMatched && !ttagMatched && filteredSkills.length === 0) return;
+        // 🌟 修正：キーワードがある場合、オペレーター自身（各種素質情報含む）か「条件を満たしたスキル」のどちらかもキーワードにヒットしていなければ除外
+        if (kw && !nameMatched && !cvMatched && !rangeMatched && !traitMatched && !ttagMatched && !d1sdtlMatched && !d1stagMatched && !d2sdtlMatched && !d2stagMatched && filteredSkills.length === 0) return;
         
         // スキルタグ等のフィルター、またはキーワードがある場合に、表示対象となるスキルだけをセット
         // （何もヒットしなかった場合は非表示、または空行化の制御）
@@ -471,10 +497,12 @@ function renderTable(allData, tab, side) {
                         // ドロップダウンで選択されているワードを追加（大文字小文字を区別しないため小文字化）
                         highlightWords.push(...tab.selections[col.id].map(v => String(v).toLowerCase()));
                     }
-
+                    if (['ttag', 'd1stag', 'd2stag'].includes(col.id) && tab.selections.sTag && tab.selections.sTag.length) {
+                        highlightWords.push(...tab.selections.sTag.map(v => String(v).toLowerCase()));
+                    }
                     if (col.id === 'op') display = `<strong>${hl(rawVal, kw)}</strong>`;
-                    // 🌟 判定対象に 'ttag' を追加して、既存のバッジ生成処理（createBadges）に流す
-                    else if (['obtain','recruitTags','sTag','ttag'].includes(col.id)) { 
+                    // 🌟 'd1stag' と 'd2stag' もバッジ生成対象の配列に追加
+                    else if (['obtain','recruitTags','sTag','ttag','d1stag','d2stag'].includes(col.id)) { 
                         // 🌟 createBadgesにキーワード単語だけでなく、選択されたワードのリスト（配列）をそのまま渡せるようにする
                         display = createBadges(rawVal, col.id, highlightWords); 
                         clickableCls = ""; 
@@ -500,13 +528,16 @@ function renderTable(allData, tab, side) {
 
 function handleCellClick(key, val, isEncoded = false) {
     let v = isEncoded ? decodeURIComponent(val) : val;
+    if (['ttag', 'd1stag', 'd2stag'].includes(key)) {
+        key = 'sTag';
+    }
     addOrToggleSelection(key, v);
 }
 
 function renderSearchGrid() {
     const grid = document.getElementById('searchGrid');
     if(!grid) return;
-    const labels = { star:'★', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'スキルタグ' };
+    const labels = { star:'★', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'特性・素質・スキルタグ' };
     
     grid.innerHTML = `<div class="search-item keyword-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
     
@@ -628,7 +659,17 @@ function updateFilters(onlyCV = false) {
         } else if (skillKeys[k]) { 
             const subKey = skillKeys[k];
             if (k === 'sTag') {
-                let tags = []; operatorData.forEach(d => { (d.skills || []).forEach(s => { if (s && s.tag) tags.push(...String(s.tag).split(',').map(t => t.trim())); }); });
+                let tags = [];
+                operatorData.forEach(d => {
+                    ['ttag', 'd1stag', 'd2stag'].forEach(key => {
+                        if (d[key] && typeof d[key] === 'string') {
+                            tags.push(...d[key].split(',').map(t => t.trim()));
+                        }
+                    });
+                    (d.skills || []).forEach(s => {
+                        if (s && s.tag) tags.push(...String(s.tag).split(',').map(t => t.trim()));
+                    });
+                });
                 opts = [...new Set(tags)].filter(v => v && v !== '-').sort();
                 if (sTagSearchQuery) {
                     opts = opts.filter(o => o.toLowerCase().includes(sTagSearchQuery.toLowerCase()));
@@ -1026,6 +1067,10 @@ function createBadges(rawVal, colId, highlightWords = []) {
         let styleAttr = "";
         if (colId === 'ttag') {
             styleAttr = ' style="background-color: #4aA5D2; color: #ffffff;"';
+        }
+        // 🌟 第1素質タグ（d1stag）、第2素質タグ（d2stag）のときに共通の背景色と文字色を設定
+        if (['d1stag', 'd2stag'].includes(colId)) {
+            styleAttr = ' style="background-color: #4aA572; color: #ffffff;"';
         }
         
         return `<span class="badge badge-${colId}"${styleAttr} onclick="event.stopPropagation(); handleCellClick('${colId}', '${encVal}', true)">${displayVal}</span>`;
