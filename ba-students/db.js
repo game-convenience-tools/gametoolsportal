@@ -1268,10 +1268,8 @@ function renderStudentsList(students) {
                 <div class="skill-block">
                     <div class="skill-header"><span class="skill-type type-ns">NORMAL SKILL</span></div>
                     <div class="skill-title">${highlightText(s.ns_name)}</div>
-                    <div class="skill-desc">
-                        ${highlightNumbersInDesc(s.ns_desc)}
-                        ${nsAddHTML}
-                    </div>
+                    <div class="skill-desc">${highlightNumbersInDesc(s.ns_desc)}
+${nsAddHTML}</div>
                     <div class="skill-tags">${nsTagsHTML}</div>
                 </div>
                 <div class="skill-block">
