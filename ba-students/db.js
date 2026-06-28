@@ -1475,9 +1475,147 @@ document.addEventListener('click', function(e) {
 });
 
 // ============================================================================
-// 6. データベース起動
+// 【修正】日本語ラベルのURLパラメータから検索条件を自動設定するロジック
 // ============================================================================
-window.addEventListener('DOMContentLoaded', initDatabase);
+function applyUrlParameters() {
+    const params = new URLSearchParams(window.location.search);
+
+    // 1. フリーワード検索 (キーワード)
+    const keyword = params.get('キーワード');
+    if (keyword) {
+        const searchInput = document.getElementById('liveSearch');
+        if (searchInput) {
+            searchInput.value = keyword;
+            if (typeof toggleLiveSearchClearBtn === 'function') {
+                toggleLiveSearchClearBtn();
+            }
+        }
+    }
+
+    // 2. 各検索エリアの日本語ラベルとドロップダウンIDのマッピング
+    // URLで「?学校=ゲヘナ」のように指定できるようにします
+    const paramMapping = {
+        '学校': 'dropSchool',
+        '生徒タイプ': 'dropType',
+        '武器種': 'dropWeapon',
+        'カバー': 'dropCover',
+        '役割': 'dropRole',
+        '配置': 'dropPos',
+        '攻撃タイプ': 'dropAttack',
+        '防御タイプ': 'dropDefense',
+        'EXコスト': 'dropExCost',
+        '市街地': 'dropUrban',
+        '屋外': 'dropOutdoor',
+        '屋内': 'dropIndoor',
+        '愛用品': 'dropGear',
+        'CV': 'dropCv',
+        '射程': 'dropRange',
+        '愛用品有無': 'dropHasGear'
+    };
+
+    // 一般ドロップダウンのパラメータ処理
+    Object.keys(paramMapping).forEach(pKey => {
+        const pVal = params.get(pKey);
+        if (!pVal) return;
+
+        const dropdownId = paramMapping[pKey];
+        const el = document.getElementById(dropdownId);
+        if (!el) return;
+
+        const vals = pVal.split(',').map(v => v.trim());
+        const options = el.querySelectorAll('.dropdown-option');
+
+        vals.forEach(val => {
+            options.forEach(opt => {
+                const optText = opt.textContent.trim();
+                const optVal = opt.getAttribute('data-value') || optText;
+                
+                if (optText.toUpperCase().includes(val.toUpperCase()) || optVal.toUpperCase() === val.toUpperCase()) {
+                    if (badgeSelectedFilters[dropdownId] && !badgeSelectedFilters[dropdownId].includes(optVal)) {
+                        badgeSelectedFilters[dropdownId].push(optVal);
+                        opt.classList.add('selected');
+                    }
+                }
+            });
+        });
+        if (typeof updateBadgeDropdownUI === 'function') {
+            updateBadgeDropdownUI(dropdownId);
+        }
+    });
+
+    // 3. スキルタグ の個別処理（「スキルタグ」というラベルに対応）
+    const tagsParam = params.get('スキルタグ');
+    if (tagsParam) {
+        const dropTagsEl = document.getElementById('dropTags');
+        if (dropTagsEl) {
+            const tagVals = tagsParam.split(',').map(t => t.trim());
+            const tagOptions = dropTagsEl.querySelectorAll('.dropdown-option');
+
+            tagVals.forEach(tag => {
+                tagOptions.forEach(opt => {
+                    const optText = opt.textContent.trim();
+                    const optVal = opt.getAttribute('data-value') || optText;
+
+                    if (optText.toUpperCase().includes(tag.toUpperCase())) {
+                        if (badgeSelectedFilters['dropTags'] && !badgeSelectedFilters['dropTags'].includes(optVal)) {
+                            badgeSelectedFilters['dropTags'].push(optVal);
+                            opt.classList.add('selected');
+                        }
+                    }
+                });
+            });
+            if (typeof updateBadgeDropdownUI === 'function') {
+                updateBadgeDropdownUI('dropTags');
+            }
+        }
+    }
+
+    // すべてのパラメータ適用後に検索をトリガー
+    currentPage = 1;
+    if (typeof filterStudentsTrigger === 'function') {
+        filterStudentsTrigger();
+    }
+}
+
+// ============================================================================
+// 【確実版】既存のデータ読み込み完了を監視して、パラメータを適用するトリガー
+// ============================================================================
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. 既存のデータベース初期化を最優先で実行
+    if (typeof initDatabase === 'function') {
+        initDatabase();
+    }
+
+    // 2. サーバーからのデータ読み込み（cachedStudentsにデータが入るまで）を定期監視
+    let checkCount = 0;
+    const maxChecks = 50; // 最大5秒間監視（100ms × 50回）
+
+    const checkInterval = setInterval(() => {
+        checkCount++;
+
+        // データの読み込み、およびドロップダウンの準備が整ったか確認
+        if (typeof cachedStudents !== 'undefined' && cachedStudents.length > 0) {
+            clearInterval(checkInterval); // 監視を終了
+
+            // 少しだけ描画完了を待ってから適用（安全のため）
+            setTimeout(() => {
+                buildSkillTagDropdownContent(cachedStudents);
+                initSkillTagOutsideClickClose();
+                buildDynamicFiltersFromData(cachedStudents);
+                
+                // 🌟ここでURLパラメータを適用！
+                applyUrlParameters();
+            }, 50);
+            return;
+        }
+
+        // タイムアウト処理（5秒経ってもデータが来ない場合）
+        if (checkCount >= maxChecks) {
+            clearInterval(checkInterval);
+            console.warn("データの読み込みタイムアウト、またはcachedStudentsが定義されていません。");
+        }
+    }, 100); // 0.1秒ごとにデータの到着をチェックします
+});
 
 // ============================================================================
 // 7. アロナ / プラナ モード切り替え制御 ＆ ローカルストレージ保存
