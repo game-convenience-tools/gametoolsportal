@@ -32,10 +32,20 @@ const ALL_COLUMNS = [
     { id: 'sReq', label: '必要SP', width: '65px' }, 
     { id: 'sDur', label: '持続', width: '50px' },
     { id: 'sEffect', label: '効果詳細', width: '600px' },
-    { id: 'sTag', label: 'スキルタグ', visible: true, width: '240px' }
+    { id: 'sTag', label: 'スキルタグ', visible: true, width: '240px' },
+    { id: 'mtype', label: 'モジュールタイプ', visible: true, width: '120px' },
+    { id: 'ms1st', label: 'S1ｽﾃｰﾀｽ', visible: true, width: '200px' },
+    { id: 'ms1trait', label: 'S1特性詳細', visible: true, width: '400px' },
+    { id: 'ms1traittag', label: 'S1特性タグ', visible: true, width: '200px' },
+    { id: 'ms2st', label: 'S2ｽﾃｰﾀｽ', visible: true, width: '200px' },
+    { id: 'ms2sdtl', label: 'S2素質詳細', visible: true, width: '400px' },
+    { id: 'ms2stag', label: 'S2素質タグ', visible: true, width: '200px' },
+    { id: 'ms3st', label: 'S3ｽﾃｰﾀｽ', visible: true, width: '200px' },
+    { id: 'ms3sdtl', label: 'S3素質詳細', visible: true, width: '400px' },
+    { id: 'ms3stag', label: 'S3素質タグ', visible: true, width: '200px' }
 ];
 
-const filterKeys = ['sTag', 'star', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger'];
+const filterKeys = ['sTag', 'star', 'cv', 'jobGroup', 'job', 'range', 'cost', 'block', 'reDeploy', 'atkSpeed', 'obtain', 'recruitTags', 'sSpType', 'sTrigger','mtypeLast'];
 
 let operatorData = [];
 let tabs = []; 
@@ -331,12 +341,20 @@ function handleSearch(tabId, side) {
                         char[key].split(',').forEach(t => allOperatorTags.push(t.trim()));
                     }
                 });
-                // 2. スキルタグを収集
+                // 2. スキルタグ、および各種モジュールタグを収集
                 if (char.skills) {
                     char.skills.forEach(s => {
-                        if (s && s.tag) {
+                        if (!s) return;
+                        // スキルタグ
+                        if (s.tag) {
                             s.tag.split(',').forEach(t => allOperatorTags.push(t.trim()));
                         }
+                        // モジュール素質タグ3種
+                        ['ms1traittag', 'ms2stag', 'ms3stag'].forEach(key => {
+                            if (s[key] && typeof s[key] === 'string') {
+                                s[key].split(',').forEach(t => allOperatorTags.push(t.trim()));
+                            }
+                        });
                     });
                 }
                 // 🌟 .every を .some に変更し、どれか一つでも合致すれば合格とする（OR検索）
@@ -344,7 +362,7 @@ function handleSearch(tabId, side) {
                 if (!hasTag) { isFilterMatch = false; break; }
                 continue;
             }
-            if(tab.selections[k] && tab.selections[k].length && !['sPriority', 'sSpType', 'sTrigger', 'sTag'].includes(k)) {
+            if(tab.selections[k] && tab.selections[k].length && !['sPriority', 'sSpType', 'sTrigger', 'sTag', 'mtypeLast'].includes(k)) {
                 if(['obtain', 'recruitTags'].includes(k)) {
                     const rawVals = (Array.isArray(char[k]) ? char[k] : String(char[k] ?? '').split(',')).map(s => normalizeVal(s));
                     if(!tab.selections[k].some(s => rawVals.includes(normalizeVal(s)))) { isFilterMatch = false; break; }
@@ -367,7 +385,7 @@ function handleSearch(tabId, side) {
         const d2sdtlMatched = char.d2sdtl && char.d2sdtl.toLowerCase().includes(kw);
         const d2stagMatched = char.d2stag && char.d2stag.toLowerCase().includes(kw);
 
-        // 🌟 修正の核心：スキル個別のフィルタリング
+        // 🌟 修正の核心：スキル個別、およびモジュール個別のフィルタリング
         const filteredSkills = (char.skills || []).filter(s => {
             if(!s) return false;
             
@@ -375,18 +393,48 @@ function handleSearch(tabId, side) {
             if(tab.selections.sSpType.length && !tab.selections.sSpType.some(sel => normalizeVal(sel) === normalizeVal(s.spType))) return false;
             if(tab.selections.sTrigger.length && !tab.selections.sTrigger.some(sel => normalizeVal(sel) === normalizeVal(s.trigger))) return false;
             
+            // モジュールタイプ（末尾1文字）の絞り込み判定
+            if(tab.selections.mtypeLast && tab.selections.mtypeLast.length) {
+                if (!s || !s.mtype || typeof s.mtype !== 'string') return false;
+                
+                // 💡 データの末尾1文字をそのまま取得
+                const currentMtypeLast = s.mtype.trim().slice(-1);
+                
+                // 💡 選択された文字と「そのまま」一致するか判定
+                if (!tab.selections.mtypeLast.some(sel => String(sel) === currentMtypeLast)) {
+                    return false;
+                }
+            }
+
             // 2. 上記のスキルタグ等に合格した上で、キーワード検索（kw）が入力されている場合の判定
             if(kw) {
                 // 名前やCVがヒットしているなら、スキル条件は（タグさえ合っていれば）中身を問わず合格
                 if(nameMatched || cvMatched || rangeMatched) return true;
-                // 名前やCVがヒットしていないなら、スキル名かスキル効果にキーワードが含まれている必要がある
-                return (s.name || "").toLowerCase().includes(kw) || (s.effect || "").toLowerCase().includes(kw);
+
+                // スキル名かスキル効果にキーワードが含まれているか
+                const skillMatched = (s.name || "").toLowerCase().includes(kw) || (s.effect || "").toLowerCase().includes(kw);
+
+                // 💡 【新規追加】モジュール関連の全10プロパティにキーワードが含まれているか
+                const moduleMatched = 
+                    String(s.mtype || "").toLowerCase().includes(kw) ||
+                    String(s.ms1st || "").toLowerCase().includes(kw) ||
+                    String(s.ms1trait || "").toLowerCase().includes(kw) ||
+                    String(s.ms1traittag || "").toLowerCase().includes(kw) ||
+                    String(s.ms2st || "").toLowerCase().includes(kw) ||
+                    String(s.ms2sdtl || "").toLowerCase().includes(kw) ||
+                    String(s.ms2stag || "").toLowerCase().includes(kw) ||
+                    String(s.ms3st || "").toLowerCase().includes(kw) ||
+                    String(s.ms3sdtl || "").toLowerCase().includes(kw) ||
+                    String(s.ms3stag || "").toLowerCase().includes(kw);
+
+                // スキル、またはモジュール項目のどちらかがキーワードにヒットしていれば合格
+                return skillMatched || moduleMatched;
             }
             
             return true;
         });
 
-        const hasSkillFilter = tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length;
+        const hasSkillFilter = tab.selections.sSpType.length || tab.selections.sTrigger.length || tab.selections.sTag.length || (tab.selections.mtypeLast && tab.selections.mtypeLast.length);
         
         // 🌟 修正：キーワードがある場合、オペレーター自身（各種素質情報含む）か「条件を満たしたスキル」のどちらかもキーワードにヒットしていなければ除外
         if (kw && !nameMatched && !cvMatched && !rangeMatched && !traitMatched && !ttagMatched && !d1sdtlMatched && !d1stagMatched && !d2sdtlMatched && !d2stagMatched && filteredSkills.length === 0) return;
@@ -474,12 +522,12 @@ function renderTable(allData, tab, side) {
     } else {
         displayData.forEach(char => {
             const visibleSkills = char._displaySkills || (char.skills || [null]);
-            const skillMap = { sName:'name', sPriority:'priority', sSpType:'spType', sTrigger:'trigger', sInit:'initSp', sReq:'reqSp', sDur:'duration', sEffect:'effect', sTag:'tag' };
+            const skillMap = { sName:'name', sPriority:'priority', sSpType:'spType', sTrigger:'trigger', sInit:'initSp', sReq:'reqSp', sDur:'duration', sEffect:'effect', sTag:'tag', mtype:'mtype', ms1st:'ms1st', ms1trait:'ms1trait', ms1traittag:'ms1traittag', ms2st:'ms2st', ms2sdtl:'ms2sdtl', ms2stag:'ms2stag', ms3st:'ms3st', ms3sdtl:'ms3sdtl', ms3stag:'ms3stag' };
 
             visibleSkills.forEach((s, i) => {
                 let row = '<tr>';
                 cols.forEach(col => {
-                    const isMain = !['sName','sPriority','sSpType','sTrigger','sInit','sReq','sDur','sEffect','sTag'].includes(col.id);
+                    const isMain = !['sName','sPriority','sSpType','sTrigger','sInit','sReq','sDur','sEffect','sTag','mtype','ms1st','ms1trait','ms1traittag','ms2st','ms2sdtl','ms2stag','ms3st','ms3sdtl','ms3stag'].includes(col.id);
                     if (isMain && i > 0) return;
                     
                     let rawVal = isMain ? (col.id === 'op' ? char.name : (char[col.id] ?? '-')) : (s ? (s[skillMap[col.id]] ?? '-') : '-');
@@ -497,17 +545,20 @@ function renderTable(allData, tab, side) {
                         // ドロップダウンで選択されているワードを追加（大文字小文字を区別しないため小文字化）
                         highlightWords.push(...tab.selections[col.id].map(v => String(v).toLowerCase()));
                     }
-                    if (['ttag', 'd1stag', 'd2stag'].includes(col.id) && tab.selections.sTag && tab.selections.sTag.length) {
+                    if (['ttag', 'd1stag', 'd2stag', 'ms1traittag', 'ms2stag', 'ms3stag'].includes(col.id) && tab.selections.sTag && tab.selections.sTag.length) {
                         highlightWords.push(...tab.selections.sTag.map(v => String(v).toLowerCase()));
                     }
                     if (col.id === 'op') display = `<strong>${hl(rawVal, kw)}</strong>`;
                     // 🌟 'd1stag' と 'd2stag' もバッジ生成対象の配列に追加
-                    else if (['obtain','recruitTags','sTag','ttag','d1stag','d2stag'].includes(col.id)) { 
+                    else if (['obtain','recruitTags','sTag','ttag','d1stag','d2stag', 'ms1traittag', 'ms2stag', 'ms3stag'].includes(col.id)) { 
                         // 🌟 createBadgesにキーワード単語だけでなく、選択されたワードのリスト（配列）をそのまま渡せるようにする
                         display = createBadges(rawVal, col.id, highlightWords); 
                         clickableCls = ""; 
                     }
                     else if (col.id === 'range') display = `<div class="range-monospace">${formatRangeText(hl(rawVal, kw))}</div>`;
+                    else if (['ms1trait', 'ms2sdtl', 'ms3sdtl'].includes(col.id)) {
+                        display = `<div class="range-monospace">${hl(rawVal, kw)}</div>`;
+                    }
                     else display = hl(rawVal, kw);
                     
                     if (clickableCls) {
@@ -537,14 +588,20 @@ function handleCellClick(key, val, isEncoded = false) {
 function renderSearchGrid() {
     const grid = document.getElementById('searchGrid');
     if(!grid) return;
-    const labels = { star:'★', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', sTag:'特性・素質・スキルタグ' };
+    
+    // 💡 mtypeLast のラベルを追加
+    const labels = { 
+        star:'★', cv:'CV', jobGroup:'職業', job:'職分', range:'攻撃範囲', 
+        cost:'コスト', block:'ブロック数', reDeploy:'再配置', atkSpeed:'攻撃速度', 
+        obtain:'入手方法', recruitTags:'募集タグ', sSpType:'SPタイプ', sTrigger:'発動タイプ', 
+        sTag:'特性・素質・スキルタグ', mtypeLast:'モジュールタイプ' 
+    };
     
     grid.innerHTML = `<div class="search-item keyword-item"><label>キーワード</label><div class="input-wrapper"><input type="text" id="keywordInput" oninput="updateKeyword(this.value)" placeholder="名前/スキル/効果..."><span class="main-clear-btn" onclick="updateKeyword('')">×</span></div></div>`;
     
     filterKeys.forEach(k => {
         const itemClass = (k === 'sTag') ? 'search-item stag-item' : 'search-item';
         grid.innerHTML += `<div class="${itemClass}"><label>${labels[k]}</label><div class="chip-container" onclick="toggleDrop(event,'${k}')"><div id="chips-${k}"></div><span class="placeholder" id="ph-${k}">選択なし</span><span class="main-clear-btn" onclick="clearSel(event,'${k}')">×</span></div><div class="dropdown-list" id="list-${k}"></div></div>`;
-        
     });
 }
 
@@ -648,6 +705,22 @@ function updateFilters(onlyCV = false) {
         // --- ① オプションデータの抽出（データロジック） ---
         if (k === 'star') opts = [...MASTER_ORDER_STAR];
         else if (k === 'jobGroup') opts = [...MASTER_ORDER_JOBGROUP];
+        else if (k === 'mtypeLast') { 
+            let lastChars = [];
+            operatorData.forEach(d => {
+                (d.skills || []).forEach(s => {
+                    if (s && s.mtype && typeof s.mtype === 'string') {
+                        const trimmed = s.mtype.trim();
+                        if (trimmed.length > 0) {
+                            // 💡 余計な処理はせず、純粋に末尾の1文字をそのまま取得
+                            lastChars.push(trimmed.slice(-1)); 
+                        }
+                    }
+                });
+            });
+            // 重複を排除してソート（そのまま「X」「Y」「α」「β」が並びます）
+            opts = [...new Set(lastChars)].filter(v => v && v !== '-').sort();
+        }
         else if (k === 'cost') {
             opts = [...new Set(operatorData.map(d => String(d[k] || '-')))].filter(v => v && v !== '-');
             opts.sort((a, b) => { const nA = parseFloat(a), nB = parseFloat(b); if (!isNaN(nA) && !isNaN(nB)) return nA - nB; return a.localeCompare(b, 'ja'); });
@@ -661,13 +734,24 @@ function updateFilters(onlyCV = false) {
             if (k === 'sTag') {
                 let tags = [];
                 operatorData.forEach(d => {
+                    // オペレーター直下のタグ
                     ['ttag', 'd1stag', 'd2stag'].forEach(key => {
                         if (d[key] && typeof d[key] === 'string') {
                             tags.push(...d[key].split(',').map(t => t.trim()));
                         }
                     });
+                    // スキル・モジュール関連のタグ（skills配列内）
                     (d.skills || []).forEach(s => {
-                        if (s && s.tag) tags.push(...String(s.tag).split(',').map(t => t.trim()));
+                        if (!s) return;
+                        // 既存のスキルタグ
+                        if (s.tag) tags.push(...String(s.tag).split(',').map(t => t.trim()));
+                        
+                        // 新設されたモジュール用のタグ3種を追加
+                        ['ms1traittag', 'ms2stag', 'ms3stag'].forEach(key => {
+                            if (s[key] && typeof s[key] === 'string') {
+                                tags.push(...s[key].split(',').map(t => t.trim()));
+                            }
+                        });
                     });
                 });
                 opts = [...new Set(tags)].filter(v => v && v !== '-').sort();
@@ -1065,15 +1149,22 @@ function createBadges(rawVal, colId, highlightWords = []) {
         
         // 🌟 特性タグ（ttag）のとき、スキルタグ（badge-sTag）に近い背景色と文字色を設定
         let styleAttr = "";
-        if (colId === 'ttag') {
+        if (['ttag', 'ms1traittag'].includes(colId)) {
             styleAttr = ' style="background-color: #4aA5D2; color: #ffffff;"';
         }
         // 🌟 第1素質タグ（d1stag）、第2素質タグ（d2stag）のときに共通の背景色と文字色を設定
-        if (['d1stag', 'd2stag'].includes(colId)) {
+        if (['d1stag', 'd2stag', 'ms2stag', 'ms3stag'].includes(colId)) {
             styleAttr = ' style="background-color: #4aA572; color: #ffffff;"';
         }
         
-        return `<span class="badge badge-${colId}"${styleAttr} onclick="event.stopPropagation(); handleCellClick('${colId}', '${encVal}', true)">${displayVal}</span>`;
+        // 💡 追加：クリック時に連動させる検索エリアのキー（フィルターキー）を決定する
+        let filterKey = colId;
+        if (['ttag', 'd1stag', 'd2stag', 'ms1traittag', 'ms2stag', 'ms3stag'].includes(colId)) {
+            filterKey = 'sTag'; // すべてスキルタグのドロップダウンに連動させる
+        }
+        
+        // 🛠 変更：handleCellClick の第1引数を colId から filterKey に変更しました
+        return `<span class="badge badge-${colId}"${styleAttr} onclick="event.stopPropagation(); handleCellClick('${filterKey}', '${encVal}', true)">${displayVal}</span>`;
     }).join(' ');
 }
 
