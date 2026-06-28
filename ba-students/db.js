@@ -1475,13 +1475,23 @@ document.addEventListener('click', function(e) {
 });
 
 // ============================================================================
-// 【修正】日本語ラベルのURLパラメータから検索条件を自動設定するロジック
+// 【完全版・修正完了】URLパラメータから検索条件を自動設定するロジック
 // ============================================================================
 function applyUrlParameters() {
-    const params = new URLSearchParams(window.location.search);
+
+// 🌟他の項目と同様に、射程の器を確実に用意する
+    if (typeof badgeSelectedFilters !== 'undefined' && !badgeSelectedFilters['dropRange']) {
+        badgeSelectedFilters['dropRange'] = [];
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const upperParams = new Map();
+    for (const [key, value] of urlParams.entries()) {
+        upperParams.set(key.toUpperCase(), value);
+    }
 
     // 1. フリーワード検索 (キーワード)
-    const keyword = params.get('キーワード');
+    const keyword = upperParams.get('キーワード');
     if (keyword) {
         const searchInput = document.getElementById('liveSearch');
         if (searchInput) {
@@ -1492,14 +1502,41 @@ function applyUrlParameters() {
         }
     }
 
-    // 2. 各検索エリアの日本語ラベルとドロップダウンIDのマッピング
-    // URLで「?学校=ゲヘナ」のように指定できるようにします
+    // 2. CV（声優）の個別処理（擬似クリックで手動と同じ動きを完全再現）
+    const cvParam = upperParams.get('CV');
+    if (cvParam) {
+        const cvEl = document.getElementById('dropCv');
+        if (cvEl) {
+            const cvVals = cvParam.split(',').map(v => v.trim().toUpperCase());
+            const cvOptions = cvEl.querySelectorAll('.dropdown-option, button, a, [data-value], li, span');
+
+            cvVals.forEach(val => {
+                cvOptions.forEach(opt => {
+                    const optText = (opt.textContent || '').replace(/[|｜\n\r\t\s]/g, '').toUpperCase();
+                    if (optText.includes('【') && optText.includes('】')) return;
+
+                    if (optText === val) {
+                        opt.click();
+                        opt.classList.add('selected');
+                        const closestOpt = opt.closest('.dropdown-option');
+                        if (closestOpt) closestOpt.classList.add('selected');
+                    }
+                });
+            });
+        }
+    }
+
+    // 3. 各検索エリアの日本語ラベルとドロップダウンIDのマッピング
+    // 🌟「射程」を確実に復帰させました！
     const paramMapping = {
         '学校': 'dropSchool',
+        'SP/ST': 'dropType',
         '生徒タイプ': 'dropType',
         '武器種': 'dropWeapon',
+        '遮蔽': 'dropCover',
         'カバー': 'dropCover',
         '役割': 'dropRole',
+        '位置': 'dropPos',
         '配置': 'dropPos',
         '攻撃タイプ': 'dropAttack',
         '防御タイプ': 'dropDefense',
@@ -1507,20 +1544,22 @@ function applyUrlParameters() {
         '市街地': 'dropUrban',
         '屋外': 'dropOutdoor',
         '屋内': 'dropIndoor',
-        '愛用品': 'dropGear',
-        'CV': 'dropCv',
-        '射程': 'dropRange',
-        '愛用品有無': 'dropHasGear'
+        '装備品': 'dropGear',
+        '射程': 'dropRange',       // 🌟ここに確実に存在している必要があります
+        '愛用品': 'dropHasGear'
     };
 
-    // 一般ドロップダウンのパラメータ処理
+    // 一般ドロップダウンのパラメータ処理（射程もここに戻す）
     Object.keys(paramMapping).forEach(pKey => {
-        const pVal = params.get(pKey);
+        const pVal = upperParams.get(pKey.toUpperCase());
         if (!pVal) return;
 
         const dropdownId = paramMapping[pKey];
         const el = document.getElementById(dropdownId);
         if (!el) return;
+
+        // 【重要】もし器がなければ作る（他の項目と同じ扱い）
+        if (!badgeSelectedFilters[dropdownId]) badgeSelectedFilters[dropdownId] = [];
 
         const vals = pVal.split(',').map(v => v.trim());
         const options = el.querySelectorAll('.dropdown-option');
@@ -1530,21 +1569,24 @@ function applyUrlParameters() {
                 const optText = opt.textContent.trim();
                 const optVal = opt.getAttribute('data-value') || optText;
                 
+                // 通常の完全一致・部分一致判定
                 if (optText.toUpperCase().includes(val.toUpperCase()) || optVal.toUpperCase() === val.toUpperCase()) {
-                    if (badgeSelectedFilters[dropdownId] && !badgeSelectedFilters[dropdownId].includes(optVal)) {
+                    if (!badgeSelectedFilters[dropdownId].includes(optVal)) {
                         badgeSelectedFilters[dropdownId].push(optVal);
                         opt.classList.add('selected');
                     }
                 }
             });
         });
+        
+        // 🌟他の項目と同様にUIを更新
         if (typeof updateBadgeDropdownUI === 'function') {
             updateBadgeDropdownUI(dropdownId);
         }
     });
 
-    // 3. スキルタグ の個別処理（「スキルタグ」というラベルに対応）
-    const tagsParam = params.get('スキルタグ');
+    // 4. スキルタグ の個別処理
+    const tagsParam = upperParams.get('スキルタグ');
     if (tagsParam) {
         const dropTagsEl = document.getElementById('dropTags');
         if (dropTagsEl) {
